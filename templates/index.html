@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airway | Search Flights</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+    <a class="logo" href="{{ url_for('home') }}">✈ Airway</a>
+    <nav>
+        <span>Hello, {{ session.get('username', 'User') }}</span>
+        <a href="{{ url_for('my_bookings') }}">My Bookings</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+</header>
+
+<section class="hero">
+    <p class="eyebrow">YOUR JOURNEY STARTS HERE</p>
+    <h1>Discover the world with Airway.</h1>
+    <p>Find your flight, compare fares, and plan your next trip.</p>
+</section>
+
+<main class="page-container">
+    <section class="panel search-panel">
+        <h2>Search flights</h2>
+
+        <form action="{{ url_for('home') }}" method="GET" class="search-form">
+            <input type="hidden" name="search" value="1">
+
+            <div class="form-group">
+                <label for="source">From</label>
+                <select id="source" name="source" required>
+                    {% for city in cities %}
+                    <option value="{{ city }}" {% if source == city %}selected{% endif %}>
+                        {{ city }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="destination">To</label>
+                <select id="destination" name="destination" required>
+                    {% for city in cities %}
+                    <option value="{{ city }}" {% if destination == city %}selected{% endif %}>
+                        {{ city }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="travel_date">Travel date</label>
+                <input
+                    id="travel_date"
+                    type="date"
+                    name="travel_date"
+                    value="{{ travel_date }}"
+                    min="{{ today }}"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="button">Search flights</button>
+        </form>
+    </section>
+
+    <section class="messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <p class="message {{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endwith %}
+    </section>
+
+    {% if searched %}
+    <section class="results-section">
+        <h2>Available flights</h2>
+        <p>{{ source }} to {{ destination }} · {{ travel_date }}</p>
+
+        {% if flights %}
+            {% for flight in flights %}
+            <article class="flight-card">
+                <div class="flight-info">
+                    <h3>{{ flight.airline }}</h3>
+                    <h3>{{ flight.source }} → {{ flight.destination }}</h3>
+                    <p>Departure: {{ flight.departure }}</p>
+                    <p>Arrival: {{ flight.arrival }}</p>
+                    <p>{{ flight.available_seats }} seats available</p>
+                </div>
+
+                <div class="flight-fare">
+                    <h2>₹{{ flight.price }}</h2>
+                    <form action="{{ url_for('book_flight', flight_id=flight.id) }}" method="POST">
+                        <input type="hidden" name="travel_date" value="{{ travel_date }}">
+
+                        <div class="form-group">
+                            <label for="passenger-{{ flight.id }}">Passenger name</label>
+                            <input
+                                id="passenger-{{ flight.id }}"
+                                type="text"
+                                name="passenger"
+                                placeholder="Enter passenger name"
+                                required
+                            >
+                        </div>
+
+                        <button type="submit" class="button">Book flight</button>
+                    </form>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <p>No flights are available for this route. Try Hyderabad to Delhi, Hyderabad to Mumbai, or another available route.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</main>
+
+<footer class="site-footer">
+    <h2>✈ Airway</h2>
+    <p>Flight Booking System · DevOps Practice Project</p>
+    <small>Sample schedules and fares for educational use only.</small>
+</footer>
+
+</body>
+</html>

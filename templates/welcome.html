@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airway | Your Journey Starts Here</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <a class="logo" href="/">✈ Airway</a>
+    <nav>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+    </nav>
+</header>
+
+<section class="welcome-hero">
+    <div class="welcome-content">
+        <p class="eyebrow">EXPLORE THE WORLD WITH AIRWAY</p>
+        <h1>Your journey.<br>Your destination.<br>Your Airway.</h1>
+        <p>Discover flights, compare fares, and plan your next adventure.</p>
+        <a class="button welcome-button" href="{{ url_for('login') }}">
+            Book Your Flight
+        </a>
+        <p class="welcome-note">New to Airway?
+            <a href="{{ url_for('register') }}">Create your account</a>
+        </p>
+    </div>
+</section>
+
+<footer>
+    <a class="logo" href="/">✈ Airway</a>
+    <p>Your journey starts here.</p>
+    <p class="disclaimer">Sample flights for educational use only.</p>
+</footer>
+
+</body>
+</html>
