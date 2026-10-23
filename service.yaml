@@ -1,4 +1,4 @@
-cat > service.yaml <<'EOF'
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,4 +11,3 @@ spec:
     - port: 5005
       targetPort: 5005
       nodePort: 30089
-EOF
