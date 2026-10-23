@@ -2,79 +2,45 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        IMAGE_NAME = "skywalk-app"
-        CONTAINER_NAME = "skywalk-jenkins-test"
-        APP_PORT = "50010"
-    }
-
     stages {
-        stage('Checkout') {
-            steps {
-                echo "Skywalk repository checked out by Jenkins SCM."
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                echo "Building Skywalk Docker image"
-                sh 'docker build -t skywalk-app:latest .'
+                sh 'docker build -t nuhakhan1305/airway-app:week9 .'
             }
         }
 
-        stage('Test') {
+        stage('Docker Login') {
             steps {
-                echo "Checking Python syntax"
-                sh 'python3 -m py_compile app.py'
-
-                echo "Checking Docker image"
-                sh 'docker image inspect skywalk-app:latest'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    sh 'echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
             }
         }
 
-        stage('Run and Verify') {
+        stage('Push Docker Image to Docker Hub') {
             steps {
-                echo "Running Airway application container"
-                sh '''
-                    docker rm -f skywalk-jenkins-test || true
-
-                    docker run -d \
-                        --name skywalk-jenkins-test \
-                        -p 50010:5005 \
-                        skywalk-app:latest
-
-                    sleep 5
-                    curl --fail http://127.0.0.1:50010/health
-                '''
+                sh 'docker push nuhakhan1305/airway-app:week9'
             }
         }
 
-        stage('Package Docker Image') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo "Saving Docker image"
-                sh '''
-                    mkdir -p artifacts
-                    docker save skywalk-app:latest -o artifacts/skywalk-app.tar
-                '''
-            }
-        }
-
-        stage('Archive Docker Image') {
-            steps {
-                archiveArtifacts artifacts: 'artifacts/skywalk-app.tar',
-                                 fingerprint: true
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
             }
         }
     }
 
     post {
         success {
-            echo 'Airway is running at http://localhost:50010'
+            echo 'Pipeline completed successfully!'
         }
-
         failure {
-            echo 'Pipeline failed. Check the Jenkins Console Output.'
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
