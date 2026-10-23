@@ -1,5 +1,4 @@
-cd ~/Desktop/Airway
-cat > deployment.yaml <<'EOF'
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +15,6 @@ spec:
     spec:
       containers:
         - name: airway
-          image: nuhakhan1305/airway-app:week8
+          image: nuhakhan1305/airway-app:week9
           ports:
             - containerPort: 5005
-EOF
