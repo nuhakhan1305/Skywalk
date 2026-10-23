@@ -6,7 +6,7 @@ pipeline {
         PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         IMAGE_NAME = "skywalk-app"
         CONTAINER_NAME = "skywalk-jenkins-test"
-        APP_PORT = "5007"
+        APP_PORT = "50010"
     }
 
     stages {
@@ -27,6 +27,8 @@ pipeline {
             steps {
                 echo "Checking Python syntax"
                 sh 'python3 -m py_compile app.py'
+
+                echo "Checking Docker image"
                 sh 'docker image inspect skywalk-app:latest'
             }
         }
@@ -39,11 +41,11 @@ pipeline {
 
                     docker run -d \
                         --name skywalk-jenkins-test \
-                        -p 5007:5005 \
+                        -p 50010:5005 \
                         skywalk-app:latest
 
                     sleep 5
-                    curl --fail http://127.0.0.1:5007/health
+                    curl --fail http://127.0.0.1:50010/health
                 '''
             }
         }
@@ -68,7 +70,7 @@ pipeline {
 
     post {
         success {
-            echo 'Airway is running at http://localhost:5007'
+            echo 'Airway is running at http://localhost:50010'
         }
 
         failure {
