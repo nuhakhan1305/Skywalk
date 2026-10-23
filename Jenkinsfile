@@ -6,7 +6,7 @@ pipeline {
         PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         IMAGE_NAME = "skywalk-app"
         CONTAINER_NAME = "skywalk-jenkins-test"
-        APP_PORT = "5006"
+        APP_PORT = "5007"
     }
 
     stages {
@@ -27,25 +27,23 @@ pipeline {
             steps {
                 echo "Checking Python syntax"
                 sh 'python3 -m py_compile app.py'
-
-                echo "Checking Docker image"
                 sh 'docker image inspect skywalk-app:latest'
             }
         }
 
         stage('Run and Verify') {
             steps {
-                echo "Running Skywalk application container"
+                echo "Running Airway application container"
                 sh '''
                     docker rm -f skywalk-jenkins-test || true
 
                     docker run -d \
                         --name skywalk-jenkins-test \
-                        -p 5006:5005 \
+                        -p 5007:5005 \
                         skywalk-app:latest
 
                     sleep 5
-                    curl --fail http://127.0.0.1:5006/health
+                    curl --fail http://127.0.0.1:5007/health
                 '''
             }
         }
@@ -62,7 +60,6 @@ pipeline {
 
         stage('Archive Docker Image') {
             steps {
-                echo "Archiving Docker image"
                 archiveArtifacts artifacts: 'artifacts/skywalk-app.tar',
                                  fingerprint: true
             }
@@ -70,17 +67,12 @@ pipeline {
     }
 
     post {
-        always {
-            echo "Cleaning up Skywalk test container"
-            sh 'docker rm -f skywalk-jenkins-test || true'
-        }
-
         success {
-            echo 'Skywalk Docker build, verification and packaging successful!'
+            echo 'Airway is running at http://localhost:5007'
         }
 
         failure {
-            echo 'Skywalk pipeline failed. Check the Jenkins Console Output.'
+            echo 'Pipeline failed. Check the Jenkins Console Output.'
         }
     }
 }
