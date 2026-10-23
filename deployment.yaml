@@ -1,0 +1,22 @@
+cd ~/Desktop/Airway
+cat > deployment.yaml <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airway-week9-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: airway-week9
+  template:
+    metadata:
+      labels:
+        app: airway-week9
+    spec:
+      containers:
+        - name: airway
+          image: nuhakhan1305/airway-app:week8
+          ports:
+            - containerPort: 5005
+EOF

@@ -1,0 +1,14 @@
+cat > service.yaml <<'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: airway-week9-service
+spec:
+  type: NodePort
+  selector:
+    app: airway-week9
+  ports:
+    - port: 5005
+      targetPort: 5005
+      nodePort: 30089
+EOF
