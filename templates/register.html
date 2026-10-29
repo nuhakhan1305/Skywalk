@@ -1,56 +1,38 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Airway</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <a class="logo" href="/">✈ Airway</a>
-    <nav><a href="/">Home</a><a href="{{ url_for('login') }}">Login</a></nav>
-</header>
+{% extends "base.html" %}
+{% block title %}Register | Airway{% endblock %}
 
-<main class="auth-wrapper">
-    <section class="panel auth-panel">
-        <p class="eyebrow">JOIN AIRWAY</p>
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-icon">✈</div>
         <h1>Create your account</h1>
-        <p>Register to book flights and manage your trips.</p>
+        <p class="muted center">A few details and you are ready to explore.</p>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
-
-        <form method="POST" class="auth-form">
+        <form method="POST" class="form">
             <label for="username">Full name</label>
-            <input id="username" name="username" type="text"
-                   maxlength="80" autocomplete="name" required>
+            <input id="username" type="text" name="username"
+                   minlength="2" maxlength="70" required>
 
             <label for="email">Email address</label>
-            <input id="email" name="email" type="email"
+            <input id="email" type="email" name="email"
                    autocomplete="email" required>
 
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password"
+            <label for="password">Password (at least 8 characters)</label>
+            <input id="password" type="password" name="password"
                    minlength="8" autocomplete="new-password" required>
 
             <label for="confirm_password">Confirm password</label>
-            <input id="confirm_password" name="confirm_password"
-                   type="password" minlength="8"
+            <input id="confirm_password" type="password"
+                   name="confirm_password" minlength="8"
                    autocomplete="new-password" required>
 
-            <button type="submit">Create account</button>
+            <button class="button primary full" type="submit">Create account</button>
         </form>
 
-        <p class="auth-switch">Already registered?
-            <a href="{{ url_for('login') }}">Log in</a>
+        <p class="center">Already registered?
+            <a href="{{ url_for('login') }}">Login</a>
         </p>
-    </section>
-</main>
-
-</body>
-</html>
+    </div>
+</section>
+{% endblock %}

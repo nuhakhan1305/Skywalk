@@ -1,46 +1,29 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Airway</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <a class="logo" href="/">✈ Airway</a>
-    <nav><a href="/">Home</a><a href="{{ url_for('register') }}">Register</a></nav>
-</header>
+{% extends "base.html" %}
+{% block title %}Login | Airway{% endblock %}
 
-<main class="auth-wrapper">
-    <section class="panel auth-panel">
-        <p class="eyebrow">WELCOME BACK</p>
-        <h1>Log in to Airway</h1>
-        <p>Access your account and manage your bookings.</p>
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-icon">✈</div>
+        <h1>Welcome back</h1>
+        <p class="muted center">Log in to search flights and manage your bookings.</p>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
-
-        <form method="POST" class="auth-form">
+        <form method="POST" class="form">
             <label for="email">Email address</label>
-            <input id="email" name="email" type="email"
+            <input id="email" type="email" name="email"
                    autocomplete="email" required>
 
             <label for="password">Password</label>
-            <input id="password" name="password" type="password"
+            <input id="password" type="password" name="password"
                    autocomplete="current-password" required>
 
-            <button type="submit">Log in</button>
+            <button class="button primary full" type="submit">Login</button>
         </form>
 
-        <p class="auth-switch">New to Airway?
+        <p class="center">New to Airway?
             <a href="{{ url_for('register') }}">Create an account</a>
         </p>
-    </section>
-</main>
-</body>
-</html>
+    </div>
+</section>
+{% endblock %}

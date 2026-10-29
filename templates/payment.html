@@ -1,0 +1,69 @@
+
+{% extends "base.html" %}
+{% block title %}Demo Payment | Airway{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <span class="eyebrow">STEP 2 OF 2</span>
+    <h1>Review your booking</h1>
+    <p class="muted">This is a demo checkout. No real payment will be taken.</p>
+</section>
+
+<div class="checkout-grid">
+    <section class="panel">
+        <h2>Flight summary</h2>
+
+        <div class="summary-route">
+            <strong>{{ flight.source }}</strong>
+            <span>→</span>
+            <strong>{{ flight.destination }}</strong>
+        </div>
+
+        <p class="muted">{{ flight.airline }} · {{ flight.departure }} – {{ flight.arrival }}</p>
+
+        <div class="summary-line">
+            <span>Passenger</span><strong>{{ passenger }}</strong>
+        </div>
+        <div class="summary-line">
+            <span>Travel date</span><strong>{{ travel_date }}</strong>
+        </div>
+        <div class="summary-line">
+            <span>Seat</span><strong>{{ seat_number }} ({{ seat_type }})</strong>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Fare breakdown</h2>
+
+        <div class="summary-line">
+            <span>Base fare</span><strong>₹{{ base_fare }}</strong>
+        </div>
+        <div class="summary-line">
+            <span>Demo tax (5%)</span><strong>₹{{ demo_tax }}</strong>
+        </div>
+        <div class="summary-line total-line">
+            <span>Total</span><strong>₹{{ total }}</strong>
+        </div>
+
+        <div class="demo-notice">
+            Demo payment only. No card details are requested or charged.
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('confirm_booking', flight_id=flight.id) }}">
+            <input type="hidden" name="travel_date" value="{{ travel_date }}">
+            <input type="hidden" name="passenger" value="{{ passenger }}">
+            <input type="hidden" name="seat_number" value="{{ seat_number }}">
+
+            <button class="button primary full" type="submit">
+                Confirm demo booking
+            </button>
+        </form>
+
+        <a class="back-link"
+           href="{{ url_for('home', source=flight.source, destination=flight.destination, travel_date=travel_date, search='1') }}">
+            Cancel and return to search
+        </a>
+    </section>
+</div>
+{% endblock %}

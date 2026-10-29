@@ -1,0 +1,33 @@
+
+{% extends "base.html" %}
+{% block title %}Dashboard | Airway{% endblock %}
+{% block content %}
+<section class="section-heading"><div><p class="eyebrow">YOUR AIRWAY</p>
+<h1>Welcome, {{ current_user.get('name', 'Traveller') }}!</h1>
+<p class="muted">Here is an overview of your bookings.</p></div></section>
+
+<div class="stats-grid">
+    <div class="stat-card"><span>Active bookings</span><strong>{{ active_count }}</strong></div>
+    <div class="stat-card"><span>Total bookings</span><strong>{{ bookings|length }}</strong></div>
+    <div class="stat-card"><span>Active booking spend</span><strong>₹{{ total_spent }}</strong></div>
+</div>
+
+<section class="section-heading"><h2>Recent bookings</h2><a href="{{ url_for('my_bookings') }}">View all</a></section>
+{% set recent = bookings|rejectattr('cancelled')|list %}
+{% if recent %}
+<div class="flight-list">
+    {% for booking in recent[:3] %}
+    <article class="panel booking-card">
+        <p class="eyebrow">{{ booking.reference }}</p>
+        <h2>{{ booking.flight.source }} → {{ booking.flight.destination }}</h2>
+        <p>{{ booking.travel_date }} · {{ booking.flight.airline }}</p>
+        <p>Seats: {{ booking.seats|join(", ") }} · Total: ₹{{ booking.total }}</p>
+        <a class="btn" href="{{ url_for('confirmation', booking_id=booking.id) }}">View ticket</a>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel empty"><h2>Your next trip starts here</h2><p>You do not have any active bookings.</p>
+<a class="btn" href="{{ url_for('index') }}">Search flights</a></section>
+{% endif %}
+{% endblock %}

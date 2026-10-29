@@ -1,0 +1,129 @@
+
+{% extends "base.html" %}
+{% block title %}Choose Seat | Airway{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <span class="eyebrow">STEP 1 OF 2</span>
+    <h1>Choose your seat</h1>
+    <p class="muted">{{ flight.airline }} · {{ flight.source }} → {{ flight.destination }} · {{ travel_date }}</p>
+</section>
+
+<div class="seat-layout">
+    <section class="panel seat-panel">
+        <div class="legend">
+            <span><i class="seat-key available-key"></i> Available</span>
+            <span><i class="seat-key selected-key"></i> Selected</span>
+            <span><i class="seat-key occupied-key"></i> Occupied</span>
+        </div>
+
+        <p class="seat-guide">
+            A &amp; F = Window · B &amp; E = Middle · C &amp; D = Aisle
+        </p>
+
+        <div class="plane-cabin">
+            <div class="cockpit">✈ FRONT OF AIRCRAFT</div>
+
+            {% for row in seat_map|batch(6, none) %}
+            <div class="seat-row">
+                {% for seat in row[:3] %}
+                    {% if seat %}
+                    <label class="seat {{ 'occupied' if seat.occupied else 'available' }}"
+                           title="{{ seat.number }} - {{ seat.type }}">
+                        {{ seat.number }}
+                        <input type="radio" name="seat_number_visual"
+                               value="{{ seat.number }}"
+                               data-type="{{ seat.type }}"
+                               {% if seat.occupied %}disabled{% endif %}
+                               aria-label="{{ seat.number }} {{ seat.type }}">
+                    </label>
+                    {% endif %}
+                {% endfor %}
+
+                <span class="aisle"></span>
+
+                {% for seat in row[3:] %}
+                    {% if seat %}
+                    <label class="seat {{ 'occupied' if seat.occupied else 'available' }}"
+                           title="{{ seat.number }} - {{ seat.type }}">
+                        {{ seat.number }}
+                        <input type="radio" name="seat_number_visual"
+                               value="{{ seat.number }}"
+                               data-type="{{ seat.type }}"
+                               {% if seat.occupied %}disabled{% endif %}
+                               aria-label="{{ seat.number }} {{ seat.type }}">
+                    </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <aside class="panel trip-summary">
+        <h2>Your trip</h2>
+
+        <div class="summary-route">
+            <strong>{{ flight.source }}</strong>
+            <span>→</span>
+            <strong>{{ flight.destination }}</strong>
+        </div>
+
+        <p class="muted">{{ flight.airline }} · {{ flight.departure }} – {{ flight.arrival }}</p>
+
+        <div class="summary-line">
+            <span>Passenger</span><strong>{{ passenger }}</strong>
+        </div>
+        <div class="summary-line">
+            <span>Date</span><strong>{{ travel_date }}</strong>
+        </div>
+        <div class="summary-line">
+            <span>Selected seat</span><strong id="chosen-seat">None</strong>
+        </div>
+        <div class="summary-line">
+            <span>Seat type</span><strong id="chosen-type">—</strong>
+        </div>
+        <div class="summary-line">
+            <span>Base fare</span><strong>₹{{ flight.price }}</strong>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('payment', flight_id=flight.id) }}"
+              id="seat-form">
+            <input type="hidden" name="travel_date" value="{{ travel_date }}">
+            <input type="hidden" name="passenger" value="{{ passenger }}">
+            <input type="hidden" name="seat_number" id="seat-number-hidden">
+
+            <button class="button primary full" id="continue-button"
+                    type="submit" disabled>
+                Continue to demo payment
+            </button>
+        </form>
+
+        <a class="back-link"
+           href="{{ url_for('home', source=flight.source, destination=flight.destination, travel_date=travel_date, search='1') }}">
+            ← Back to flights
+        </a>
+    </aside>
+</div>
+
+<script>
+const radios = document.querySelectorAll('input[name="seat_number_visual"]');
+
+radios.forEach(function (radio) {
+    radio.addEventListener("change", function () {
+        document.getElementById("chosen-seat").textContent = this.value;
+        document.getElementById("chosen-type").textContent = this.dataset.type;
+        document.getElementById("seat-number-hidden").value = this.value;
+        document.getElementById("continue-button").disabled = false;
+    });
+});
+
+document.getElementById("seat-form").addEventListener("submit", function (event) {
+    if (!document.getElementById("seat-number-hidden").value) {
+        event.preventDefault();
+        alert("Please select a seat first.");
+    }
+});
+</script>
+{% endblock %}

@@ -1,78 +1,45 @@
+{% extends "base.html" %}
+{% block title %}My Bookings | Airway{% endblock %}
+{% block content %}
+<section class="section-heading"><div><p class="eyebrow">YOUR TRIPS</p><h1>My bookings</h1>
+<p class="muted">View your tickets or cancel a demo booking.</p></div>
+<a class="btn" href="{{ url_for('home') }}">Book a flight</a></section>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings | Airway</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <a class="logo" href="/">✈ Airway</a>
-    <nav>
-        <a href="/">Search flights</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
-    </nav>
-</header>
-
-<main class="bookings-page">
-    <p class="eyebrow">YOUR TRAVEL</p>
-    <h1>My Bookings</h1>
-    <p>Welcome, {{ session.get('username') }}. Here are your trips.</p>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-            <div class="message {{ category }}">{{ message }}</div>
-        {% endfor %}
-    {% endwith %}
-
-    {% if bookings %}
-        {% for booking in bookings %}
-        <article class="panel booking-card">
-            <div class="booking-top">
-                <div>
-                    <p class="eyebrow">BOOKING REFERENCE</p>
-                    <h3>{{ booking.reference }}</h3>
-                </div>
-                <span class="status {{ booking.status|lower }}">
-                    {{ booking.status }}
-                </span>
+{% if bookings %}
+<div class="flight-list">
+    {% for booking in bookings %}
+    <article class="panel booking-card">
+        <div class="booking-top">
+            <div><p class="eyebrow">{{ booking.reference }}</p>
+                <h2>{{ booking.flight.source }} → {{ booking.flight.destination }}</h2>
+                <p>{{ booking.flight.airline }} · {{ booking.flight.flight_number }}</p>
             </div>
-
-            <div class="booking-route">
-                <div>
-                    <p>{{ booking.flight.departure }}</p>
-                    <h3>{{ booking.flight.source }}</h3>
-                </div>
-                <div class="route-line"><span>✈</span><div></div></div>
-                <div>
-                    <p>{{ booking.flight.arrival }}</p>
-                    <h3>{{ booking.flight.destination }}</h3>
-                </div>
-            </div>
-
-            <p><strong>Passenger:</strong> {{ booking.passenger }}</p>
-            <p><strong>Airline:</strong> {{ booking.flight.airline }}</p>
-            <p><strong>Travel date:</strong> {{ booking.travel_date }}</p>
-            <p><strong>Fare:</strong> ₹{{ booking.flight.price }}</p>
-
-            {% if booking.status == "Confirmed" %}
-            <form method="POST"
-                  action="{{ url_for('cancel_booking', booking_id=booking.id) }}"
-                  onsubmit="return confirm('Are you sure you want to cancel this booking?');">
-                <button type="submit" class="cancel-button">Cancel booking</button>
+            {% if booking.status == 'Cancelled' %}
+                <span class="status-pill cancelled">Cancelled</span>
+            {% else %}
+                <span class="status-pill">Booked</span>
+            {% endif %}
+        </div>
+        <div class="details-grid">
+            <div><small>Travel date</small><strong>{{ booking.travel_date }}</strong></div>
+            <div><small>Departure</small><strong>{{ booking.flight.departure }}</strong></div>
+            <div><small>Seat</small><strong>{{ booking.seat }}</strong></div>
+            <div><small>Passenger</small><strong>{{ booking.passenger }}</strong></div>
+            <div><small>Total</small><strong>₹{{ booking.total }}</strong></div>
+        </div>
+        <div class="button-row">
+            {% if booking.status != 'Cancelled' %}
+            <a class="btn" href="{{ url_for('confirmation', booking_id=booking.id) }}">View e-ticket</a>
+            <form method="post" action="{{ url_for('cancel_booking', booking_id=booking.id) }}" onsubmit="return confirm('Cancel this demo booking?')">
+                <button class="btn danger" type="submit">Cancel booking</button>
             </form>
             {% endif %}
-        </article>
-        {% endfor %}
-    {% else %}
-        <div class="panel empty-state">
-            <h3>No bookings yet</h3>
-            <p>Your confirmed bookings will appear here.</p>
-            <a class="button" href="/">Find a flight</a>
         </div>
-    {% endif %}
-</main>
-</body>
-</html>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel empty"><h2>No bookings yet</h2><p>Your confirmed bookings will appear here.</p>
+<a class="btn" href="{{ url_for('home') }}">Search flights</a></section>
+{% endif %}
+{% endblock %}

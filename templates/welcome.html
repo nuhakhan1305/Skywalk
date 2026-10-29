@@ -1,41 +1,33 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airway | Your Journey Starts Here</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Welcome | Airway{% endblock %}
 
-<header>
-    <a class="logo" href="/">✈ Airway</a>
-    <nav>
-        <a href="{{ url_for('login') }}">Login</a>
-        <a href="{{ url_for('register') }}">Register</a>
-    </nav>
-</header>
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">YOUR JOURNEY STARTS HERE</span>
+        <h1>Find your next<br><span>flight with Airway.</span></h1>
+        <p>Explore sample flights, choose your seat, and manage your bookings in one simple place.</p>
 
-<section class="welcome-hero">
-    <div class="welcome-content">
-        <p class="eyebrow">EXPLORE THE WORLD WITH AIRWAY</p>
-        <h1>Your journey.<br>Your destination.<br>Your Airway.</h1>
-        <p>Discover flights, compare fares, and plan your next adventure.</p>
-        <a class="button welcome-button" href="{{ url_for('login') }}">
-            Book Your Flight
-        </a>
-        <p class="welcome-note">New to Airway?
-            <a href="{{ url_for('register') }}">Create your account</a>
-        </p>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ url_for('login') }}">Login</a>
+            <a class="button secondary" href="{{ url_for('register') }}">Create account</a>
+        </div>
+
+        <div class="feature-strip">
+            <div><strong>60</strong><span>Sample flights</span></div>
+            <div><strong>36</strong><span>Seats per flight</span></div>
+            <div><strong>4</strong><span>Destinations</span></div>
+        </div>
+    </div>
+
+    <div class="hero-art">
+        <div class="sun"></div>
+        <div class="cloud cloud-one"></div>
+        <div class="cloud cloud-two"></div>
+        <div class="plane-emoji">✈</div>
+        <div class="route-line"></div>
+        <div class="destination-tag">Your next adventure</div>
     </div>
 </section>
-
-<footer>
-    <a class="logo" href="/">✈ Airway</a>
-    <p>Your journey starts here.</p>
-    <p class="disclaimer">Sample flights for educational use only.</p>
-</footer>
-
-</body>
-</html>
+{% endblock %}

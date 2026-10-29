@@ -1,0 +1,59 @@
+
+{% extends "base.html" %}
+{% block title %}Ticket Confirmation | Airway{% endblock %}
+
+{% block content %}
+<section class="ticket-wrap">
+    <div class="ticket" id="print-ticket">
+        <div class="ticket-success">✓</div>
+
+        <p class="eyebrow center">BOOKING CONFIRMED</p>
+        <h1 class="center">You're ready to fly!</h1>
+        <p class="muted center">This is your Airway demo e-ticket.</p>
+
+        <div class="ticket-ref">
+            <span>BOOKING REFERENCE</span>
+            <strong>{{ booking.reference }}</strong>
+        </div>
+
+        <div class="ticket-route">
+            <div>
+                <span>{{ booking.flight.source }}</span>
+                <strong>{{ booking.flight.departure }}</strong>
+            </div>
+
+            <div class="route-plane">✈ ─────</div>
+
+            <div>
+                <span>{{ booking.flight.destination }}</span>
+                <strong>{{ booking.flight.arrival }}</strong>
+            </div>
+        </div>
+
+        <div class="ticket-grid">
+            <div><span>Passenger</span><strong>{{ booking.passenger }}</strong></div>
+            <div><span>Airline</span><strong>{{ booking.flight.airline }}</strong></div>
+            <div><span>Travel date</span><strong>{{ booking.travel_date }}</strong></div>
+            <div><span>Seat</span><strong>{{ booking.seat }} · {{ booking.seat_type }}</strong></div>
+            <div><span>Base fare</span><strong>₹{{ booking.base_fare }}</strong></div>
+            <div><span>Demo tax</span><strong>₹{{ booking.tax }}</strong></div>
+        </div>
+
+        <div class="ticket-total">
+            <span>Total fare</span>
+            <strong>₹{{ booking.total }}</strong>
+        </div>
+
+        <p class="demo-notice">
+            Sample ticket only. This project does not issue real airline tickets
+            or process real payments.
+        </p>
+    </div>
+
+    <div class="ticket-actions no-print">
+        <button class="button primary" onclick="window.print()">Print ticket</button>
+        <a class="button secondary" href="{{ url_for('my_bookings') }}">My bookings</a>
+        <a class="button secondary" href="{{ url_for('home') }}">Search flights</a>
+    </div>
+</section>
+{% endblock %}
