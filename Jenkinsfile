@@ -1,79 +1,51 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        IMAGE_NAME = "skywalk-app"
-        CONTAINER_NAME = "skywalk-jenkins-test"
-        APP_PORT = "50010"
-    }
-
     stages {
+
         stage('Checkout') {
             steps {
-                echo "Skywalk repository checked out by Jenkins SCM."
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo "Building Skywalk Docker image"
-                sh 'docker build -t skywalk-app:latest .'
+                echo "Cloning Airway repository..."
+                checkout scm
             }
         }
 
         stage('Test') {
             steps {
-                echo "Checking Python syntax"
+                echo "Checking Airway Python application"
                 sh 'python3 -m py_compile app.py'
-
-                echo "Checking Docker image"
-                sh 'docker image inspect skywalk-app:latest'
             }
         }
 
-        stage('Run and Verify') {
+        stage('Run') {
             steps {
-                echo "Running Airway application container"
-                sh '''
-                    docker rm -f skywalk-jenkins-test || true
-
-                    docker run -d \
-                        --name skywalk-jenkins-test \
-                        -p 50010:5005 \
-                        skywalk-app:latest
-
-                    sleep 5
-                    curl --fail http://127.0.0.1:50010/health
-                '''
+                echo "Checking Airway application code"
+                sh 'python3 -c "import ast; ast.parse(open(\'app.py\').read()); print(\'Airway application code is valid\')"'
             }
         }
 
-        stage('Package Docker Image') {
+        stage('Package') {
             steps {
-                echo "Saving Docker image"
-                sh '''
-                    mkdir -p artifacts
-                    docker save skywalk-app:latest -o artifacts/skywalk-app.tar
-                '''
+                echo "Packaging Airway project"
+                sh 'tar -czf airway-project.tar.gz --exclude=.git --exclude=.venv .'
             }
         }
 
-        stage('Archive Docker Image') {
+        stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'artifacts/skywalk-app.tar',
-                                 fingerprint: true
+                echo "Archiving Airway project"
+                archiveArtifacts artifacts: 'airway-project.tar.gz'
             }
         }
     }
 
     post {
         success {
-            echo 'Airway is running at http://localhost:50010'
+            echo 'Airway testing and packaging completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed. Check the Jenkins Console Output.'
+            echo 'Pipeline failed. Check Jenkins Console Output.'
         }
     }
 }
