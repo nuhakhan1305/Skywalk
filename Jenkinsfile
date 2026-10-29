@@ -1,42 +1,52 @@
-
 pipeline {
     agent any
 
     environment {
-        PATH = "/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        KUBECONFIG = '/Users/nuhakhan/.kube/config'
     }
 
     stages {
-        stage('Check Docker') {
+        stage('Build Docker Image') {
             steps {
-                sh 'which docker'
-                sh 'docker --version'
+                // Builds the image with your week9 tag
+                sh 'docker build -t nuhakhan1305/airway-app:week9 .'
             }
         }
 
-        stage('Build') {
+        stage('Docker Login') {
             steps {
-                echo "Build Airway Docker Image"
-                sh 'docker build -t airway-app .'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    sh 'echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
             }
         }
 
-        stage('Run') {
+        stage('Push Docker Image to Docker Hub') {
             steps {
-                echo "Run Airway Application in Docker Container"
-                sh 'docker rm -f airway-jenkins-test || true'
-                sh 'docker run -d -p 5006:5005 --name airway-jenkins-test airway-app'
+                sh 'docker push nuhakhan1305/airway-app:week9'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Note: I changed this to deplo.yaml to match your exact filename
+                sh 'kubectl apply -f deplo.yaml'
+                sh 'kubectl apply -f service.yaml'
             }
         }
     }
 
     post {
         success {
-            echo 'Airway pipeline completed successfully!'
+            echo 'Pipeline completed successfully!'
         }
-
         failure {
-            echo 'Airway pipeline failed. Please check the logs.'
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
