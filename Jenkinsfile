@@ -3,13 +3,11 @@ pipeline {
 
     environment {
         PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        KUBECONFIG = '/Users/nuhakhan/.kube/config'
     }
 
     stages {
         stage('Build Docker Image') {
             steps {
-                // Builds the image with your week9 tag
                 sh 'docker build -t nuhakhan1305/airway-app:week9 .'
             }
         }
@@ -34,8 +32,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // Note: I changed this to deplo.yaml to match your exact filename
-                sh 'kubectl apply -f deplo.yaml'
+                sh 'kubectl apply -f deployment.yaml'
                 sh 'kubectl apply -f service.yaml'
             }
         }
