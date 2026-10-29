@@ -1,51 +1,42 @@
+
 pipeline {
     agent any
 
-    stages {
+    environment {
+        PATH = "/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
 
-        stage('Checkout') {
+    stages {
+        stage('Check Docker') {
             steps {
-                echo "Cloning Airway repository..."
-                checkout scm
+                sh 'which docker'
+                sh 'docker --version'
             }
         }
 
-        stage('Test') {
+        stage('Build') {
             steps {
-                echo "Checking Airway Python application"
-                sh 'python3 -m py_compile app.py'
+                echo "Build Airway Docker Image"
+                sh 'docker build -t airway-app .'
             }
         }
 
         stage('Run') {
             steps {
-                echo "Checking Airway application code"
-                sh 'python3 -c "import ast; ast.parse(open(\'app.py\').read()); print(\'Airway application code is valid\')"'
-            }
-        }
-
-        stage('Package') {
-            steps {
-                echo "Packaging Airway project"
-                sh 'tar -czf airway-project.tar.gz --exclude=.git --exclude=.venv .'
-            }
-        }
-
-        stage('Archive') {
-            steps {
-                echo "Archiving Airway project"
-                archiveArtifacts artifacts: 'airway-project.tar.gz'
+                echo "Run Airway Application in Docker Container"
+                sh 'docker rm -f airway-jenkins-test || true'
+                sh 'docker run -d -p 5006:5005 --name airway-jenkins-test airway-app'
             }
         }
     }
 
     post {
         success {
-            echo 'Airway testing and packaging completed successfully!'
+            echo 'Airway pipeline completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed. Check Jenkins Console Output.'
+            echo 'Airway pipeline failed. Please check the logs.'
         }
     }
 }
