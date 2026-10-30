@@ -2,6 +2,7 @@
 from datetime import date
 from functools import wraps
 import secrets
+import os
 
 from flask import (
     Flask, render_template, request, redirect,
@@ -10,15 +11,24 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)
 
-# Simple in-memory demo storage. Data resets when Flask restarts.
+# Stable secret key: keeps login sessions valid across restarts
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "airway-demo-stable-secret-key-2026"
+)
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Demo storage
 users = {}
 bookings = []
 occupied_seats = {}
 next_booking_id = 1
 
 cities = ["Hyderabad", "Delhi", "Mumbai", "Bengaluru"]
+
 SEAT_COLUMNS = ["A", "B", "C", "D", "E", "F"]
 
 route_options = [
@@ -45,7 +55,7 @@ arrival_times = [
     "06:15 PM", "10:15 PM"
 ]
 
-# Generate 60 sample flights: 5 for each direction of 6 city pairs.
+# Generate sample flights
 flights = []
 flight_id = 1
 
@@ -68,13 +78,16 @@ for city_a, city_b, base_price in route_options:
             flight_id += 1
 
 
+# Login protection
 def login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if "user_email" not in session:
             flash("Please log in to continue.", "info")
             return redirect(url_for("login"))
+
         return view(*args, **kwargs)
+
     return wrapped_view
 
 
@@ -95,8 +108,10 @@ def valid_travel_date(value):
 
 def get_occupied_seats(flight_id, travel_date):
     key = (flight_id, travel_date)
+
     if key not in occupied_seats:
         occupied_seats[key] = set()
+
     return occupied_seats[key]
 
 
@@ -134,13 +149,16 @@ def make_seat_map(flight, travel_date):
     return seat_map
 
 
+# Welcome page
 @app.route("/")
 def welcome():
     if "user_email" in session:
         return redirect(url_for("home"))
+
     return render_template("welcome.html")
 
 
+# Registration
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if "user_email" in session:
@@ -154,23 +172,29 @@ def register():
 
         if not username or not email or not password or not confirm_password:
             flash("Please fill in every field.", "error")
+
         elif len(password) < 8:
             flash("Password must contain at least 8 characters.", "error")
+
         elif password != confirm_password:
             flash("Passwords do not match.", "error")
+
         elif email in users:
             flash("An account with this email already exists.", "error")
+
         else:
             users[email] = {
                 "username": username,
                 "password": generate_password_hash(password)
             }
+
             flash("Registration successful. Please log in.", "success")
             return redirect(url_for("login"))
 
     return render_template("register.html")
 
 
+# Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if "user_email" in session:
@@ -179,11 +203,16 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+
         user = users.get(email)
 
         if user and check_password_hash(user["password"], password):
+            session.clear()
             session["user_email"] = email
             session["username"] = user["username"]
+
+            session.permanent = True
+
             return redirect(url_for("home"))
 
         flash("Invalid email or password. Please try again.", "error")
@@ -191,17 +220,21 @@ def login():
     return render_template("login.html")
 
 
+# Logout
 @app.route("/logout")
 def logout():
     session.clear()
     flash("You have been logged out.", "info")
+
     return redirect(url_for("welcome"))
 
 
+# Flight search
 @app.route("/flights")
 @login_required
 def home():
     today = date.today().isoformat()
+
     source = request.args.get("source", "Hyderabad")
     destination = request.args.get("destination", "Delhi")
     travel_date = request.args.get("travel_date", today)
@@ -214,19 +247,25 @@ def home():
         if not valid_travel_date(travel_date):
             flash("Choose today or a future travel date.", "error")
             searched = False
+
         elif source == destination:
             flash("Departure and destination must be different.", "error")
             searched = False
+
         elif source not in cities or destination not in cities:
             flash("Please choose valid cities.", "error")
             searched = False
+
         else:
             for flight in flights:
                 if (
                     flight["source"] == source
                     and flight["destination"] == destination
                 ):
-                    available = get_available_seats(flight, travel_date)
+                    available = get_available_seats(
+                        flight, travel_date
+                    )
+
                     if available > 0:
                         matching_flights.append({
                             **flight,
@@ -234,7 +273,10 @@ def home():
                         })
 
             if sort_by == "price":
-                matching_flights.sort(key=lambda f: f["price"])
+                matching_flights.sort(
+                    key=lambda f: f["price"]
+                )
+
             elif sort_by == "departure":
                 matching_flights.sort(
                     key=lambda f: departure_times.index(f["departure"])
@@ -256,6 +298,7 @@ def home():
     )
 
 
+# Select flight and open seat selection
 @app.route("/book/<int:flight_id>", methods=["POST"])
 @login_required
 def book_flight(flight_id):
@@ -280,6 +323,7 @@ def book_flight(flight_id):
         )
     ):
         flash("Enter a valid passenger name.", "error")
+
         return redirect(url_for(
             "home",
             source=flight["source"],
@@ -289,7 +333,7 @@ def book_flight(flight_id):
         ))
 
     if get_available_seats(flight, travel_date) <= 0:
-        flash("This flight has no seats remaining for that date.", "error")
+        flash("This flight has no seats remaining.", "error")
         return redirect(url_for("home"))
 
     return render_template(
@@ -302,6 +346,7 @@ def book_flight(flight_id):
     )
 
 
+# Payment page
 @app.route("/payment/<int:flight_id>", methods=["POST"])
 @login_required
 def payment(flight_id):
@@ -330,6 +375,7 @@ def payment(flight_id):
 
     if seat_number in get_occupied_seats(flight_id, travel_date):
         flash("That seat has already been booked. Please choose another.", "error")
+
         return render_template(
             "seats.html",
             flight=flight,
@@ -340,8 +386,12 @@ def payment(flight_id):
         ), 409
 
     seat_types = {
-        "A": "Window", "B": "Middle", "C": "Aisle",
-        "D": "Aisle", "E": "Middle", "F": "Window"
+        "A": "Window",
+        "B": "Middle",
+        "C": "Aisle",
+        "D": "Aisle",
+        "E": "Middle",
+        "F": "Window"
     }
 
     base_fare = flight["price"]
@@ -360,6 +410,7 @@ def payment(flight_id):
     )
 
 
+# Confirm booking
 @app.route("/confirm-booking/<int:flight_id>", methods=["POST"])
 @login_required
 def confirm_booking(flight_id):
@@ -392,6 +443,7 @@ def confirm_booking(flight_id):
 
     if seat_number in occupied:
         flash("That seat is no longer available. Please select another.", "error")
+
         return render_template(
             "seats.html",
             flight=flight,
@@ -404,8 +456,12 @@ def confirm_booking(flight_id):
     occupied.add(seat_number)
 
     seat_types = {
-        "A": "Window", "B": "Middle", "C": "Aisle",
-        "D": "Aisle", "E": "Middle", "F": "Window"
+        "A": "Window",
+        "B": "Middle",
+        "C": "Aisle",
+        "D": "Aisle",
+        "E": "Middle",
+        "F": "Window"
     }
 
     base_fare = flight["price"]
@@ -430,9 +486,14 @@ def confirm_booking(flight_id):
     bookings.append(booking)
 
     flash("Demo booking completed successfully!", "success")
-    return redirect(url_for("confirmation", booking_id=booking["id"]))
+
+    return redirect(url_for(
+        "confirmation",
+        booking_id=booking["id"]
+    ))
 
 
+# Booking confirmation
 @app.route("/confirmation/<int:booking_id>")
 @login_required
 def confirmation(booking_id):
@@ -449,9 +510,13 @@ def confirmation(booking_id):
         flash("Booking not found.", "error")
         return redirect(url_for("my_bookings"))
 
-    return render_template("confirmation.html", booking=booking)
+    return render_template(
+        "confirmation.html",
+        booking=booking
+    )
 
 
+# My bookings
 @app.route("/my-bookings")
 @login_required
 def my_bookings():
@@ -459,9 +524,14 @@ def my_bookings():
         item for item in bookings
         if item["email"] == session["user_email"]
     ]
-    return render_template("bookings.html", bookings=user_bookings)
+
+    return render_template(
+        "bookings.html",
+        bookings=user_bookings
+    )
 
 
+# Cancel booking
 @app.route("/cancel/<int:booking_id>", methods=["POST"])
 @login_required
 def cancel_booking(booking_id):
@@ -476,8 +546,10 @@ def cancel_booking(booking_id):
 
     if not booking:
         flash("Booking not found.", "error")
+
     elif booking["status"] == "Cancelled":
         flash("This booking is already cancelled.", "info")
+
     else:
         get_occupied_seats(
             booking["flight"]["id"],
@@ -485,15 +557,21 @@ def cancel_booking(booking_id):
         ).discard(booking["seat"])
 
         booking["status"] = "Cancelled"
+
         flash("Booking cancelled. The seat is available again.", "success")
 
     return redirect(url_for("my_bookings"))
 
 
+# Health check for Docker and Jenkins
 @app.route("/health")
 def health():
     return {"status": "healthy"}, 200
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5005, debug=False)
+    app.run(
+        host="0.0.0.0",
+        port=5005,
+        debug=False
+    )
