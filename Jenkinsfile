@@ -2,63 +2,63 @@ pipeline {
 
     agent any
 
+    environment {
+
+        PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+    }
+
     stages {
 
-        stage('Checkout') {
+        stage('Build Docker Image') {
 
             steps {
 
-                echo "Cloning Airway repository..."
-
-                checkout scm
+                sh 'docker build -t nuhakhan1305/airway-app:week9 .'
 
             }
 
         }
 
-        stage('Test') {
+        stage('Docker Login') {
 
             steps {
 
-                echo "Checking Airway Python application"
+                withCredentials([usernamePassword(
 
-                sh 'python3 -m py_compile app.py'
+                    credentialsId: 'dockerhub-creds',
+
+                    usernameVariable: 'DOCKER_USER',
+
+                    passwordVariable: 'DOCKER_TOKEN'
+
+                )]) {
+
+                    sh 'echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin'
+
+                }
 
             }
 
         }
 
-        stage('Run') {
+        stage('Push Docker Image to Docker Hub') {
 
             steps {
 
-                echo "Checking Airway application code"
-
-                sh 'python3 -c "import ast; ast.parse(open(\'app.py\').read()); print(\'Airway application code is valid\')"'
+                sh 'docker push nuhakhan1305/airway-app:week9'
 
             }
 
         }
 
-        stage('Package') {
+        stage('Deploy to Kubernetes') {
 
             steps {
 
-                echo "Packaging Airway project"
+                sh 'kubectl apply -f deployment.yaml'
 
-                sh 'tar -czf airway-project.tar.gz --exclude=.git --exclude=.venv .'
-
-            }
-
-        }
-
-        stage('Archive') {
-
-            steps {
-
-                echo "Archiving Airway project"
-
-                archiveArtifacts artifacts: 'airway-project.tar.gz'
+                sh 'kubectl apply -f service.yaml'
 
             }
 
@@ -70,13 +70,13 @@ pipeline {
 
         success {
 
-            echo 'Airway testing and packaging completed successfully!'
+            echo 'Pipeline completed successfully!'
 
         }
 
         failure {
 
-            echo 'Pipeline failed. Check Jenkins Console Output.'
+            echo 'Pipeline failed. Please check the logs.'
 
         }
 
