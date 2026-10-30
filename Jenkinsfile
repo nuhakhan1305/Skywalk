@@ -1,49 +1,85 @@
 pipeline {
+
     agent any
 
-    environment {
-        PATH = "/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    }
-
     stages {
-        stage('Build Docker Image') {
+
+        stage('Checkout') {
+
             steps {
-                sh 'docker build -t nuhakhan1305/airway-app:week9 .'
+
+                echo "Cloning Airway repository..."
+
+                checkout scm
+
             }
+
         }
 
-        stage('Docker Login') {
+        stage('Test') {
+
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
-                    sh 'echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin'
-                }
+
+                echo "Checking Airway Python application"
+
+                sh 'python3 -m py_compile app.py'
+
             }
+
         }
 
-        stage('Push Docker Image to Docker Hub') {
+        stage('Run') {
+
             steps {
-                sh 'docker push nuhakhan1305/airway-app:week9'
+
+                echo "Checking Airway application code"
+
+                sh 'python3 -c "import ast; ast.parse(open(\'app.py\').read()); print(\'Airway application code is valid\')"'
+
             }
+
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Package') {
+
             steps {
-                sh 'kubectl apply -f deployment.yaml'
-                sh 'kubectl apply -f service.yaml'
+
+                echo "Packaging Airway project"
+
+                sh 'tar -czf airway-project.tar.gz --exclude=.git --exclude=.venv .'
+
             }
+
         }
+
+        stage('Archive') {
+
+            steps {
+
+                echo "Archiving Airway project"
+
+                archiveArtifacts artifacts: 'airway-project.tar.gz'
+
+            }
+
+        }
+
     }
 
     post {
+
         success {
-            echo 'Pipeline completed successfully!'
+
+            echo 'Airway testing and packaging completed successfully!'
+
         }
+
         failure {
-            echo 'Pipeline failed. Please check the logs.'
+
+            echo 'Pipeline failed. Check Jenkins Console Output.'
+
         }
+
     }
+
 }
